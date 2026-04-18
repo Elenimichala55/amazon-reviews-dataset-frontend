@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Amazon Review Insights Dashboard</title>
+  <style>
+  :root {
+    --bg: #ffffff;
+    --bg-2: #ffffff;
+    --bg-orb-1: rgba(100, 91, 91, 0.18);
+    --bg-orb-2: rgba(70, 58, 58, 0.14);
+    --bg-orb-3: rgba(34, 33, 33, 0.12);
+
+    --panel: rgba(255, 255, 255, 0.858);
+    --panel-strong: rgba(255, 255, 255, 0.88);
+    --panel-soft: rgba(255, 255, 255, 0.52);
+
+    --text: #0f172a;
+    --text-soft: #1e293b;
+    --muted: #64748b;
+
+    --accent: #304a56;
+    --accent-2: #49b7ca;
+    --accent-3: #429cac;
+    --accent-soft: rgba(70, 173, 229, 0.14);
+    --accent-line: rgba(70, 176, 229, 0.26);
+
+    --green: #16a34a;
+    --red: #dc2626;
+    --neutral: #94a3b8;
+
+    --border: rgba(148, 163, 184, 0.24);
+    --border-strong: rgba(192, 193, 206, 0.18);
+
+    --shadow: 0 10px 30px rgba(105, 106, 108, 0.08);
+    --shadow-hover: 0 20px 46px rgba(8, 196, 234, 0.208);
+    --glow: 0 0 0 1px rgba(255,255,255,0.4), 0 10px 30px rgba(79, 70, 229, 0.08);
+
+    --radius-xl: 24px;
+    --radius-lg: 18px;
+    --radius-md: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: Inter, Arial, Helvetica, sans-serif;
+    color: var(--text);
+    line-height: 1.5;
+    background:
+      radial-gradient(circle at 10% 10%, var(--bg-orb-1), transparent 28%),
+      radial-gradient(circle at 88% 18%, var(--bg-orb-2), transparent 24%),
+      radial-gradient(circle at 60% 85%, var(--bg-orb-3), transparent 26%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    background-attachment: fixed;
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
+  .app-shell {
+    width: min(1240px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 34px 0 52px;
+  }
+
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) auto;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 26px;
+    padding: 30px;
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    background: var(--panel);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: var(--glow);
+    overflow: hidden;
+  }
+
+  .topbar::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    background:
+      linear-gradient(135deg, rgba(79,70,229,0.18), rgba(6,182,212,0.10), rgba(168,85,247,0.10));
+    opacity: 0.55;
+    pointer-events: none;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    padding: 1px;
+    border-radius: 28px;
+  }
+
+  .title-wrap {
+    min-width: 0;
+    max-width: 620px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .title-wrap h1 {
+    margin: 0 0 8px;
+    font-size: clamp(24px, 3vw, 36px);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+    display: inline-block;
+    padding-right: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .title-wrap p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 560px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    z-index: 1;
+  }
+
+  .controls select,
+  .controls input {
+    width: 280px;
+    min-width: 280px;
+  }
+
+  select, input {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(255,255,255,0.72);
+    color: var(--text);
+    padding: 13px 15px;
+    border-radius: 14px;
+    font-size: 15px;
+    min-width: 220px;
+    outline: none;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  select:hover, input:hover {
+    border-color: rgba(79, 70, 229, 0.24);
+    background: rgba(255,255,255,0.86);
+  }
+
+  select:focus, input:focus {
+    border-color: var(--accent);
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 0 0 5px var(--accent-soft), inset 0 1px 0 rgba(255,255,255,0.75);
+    transform: translateY(-1px);
+  }
+
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+  }
+
+  select option {
+    background: #ffffff;
+    color: var(--text);
+  }
+
+  input::placeholder {
+    color: #7b8ba3;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 26px;
+  }
+
+  .stats-row.three-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .stat-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--panel-strong);
+  border: 1px solid transparent;
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+  min-width: 0;
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 3px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+  .stat-card .label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .stat-card .value {
+    font-size: 1.85rem;
+    font-weight: 750;
+    line-height: 1.15;
+    word-break: break-word;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+
+  .page-stack {
+    position: relative;
+    overflow: hidden;
+    min-height: 600px;
+  }
+
+  .page {
+    width: 100%;
+    transition: transform 0.45s ease, opacity 0.45s ease;
+  }
+
+  .page.hidden-left {
+    position: absolute;
+    inset: 0;
+    transform: translateX(-8%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .page.hidden-right {
+    position: absolute;
+    inset: 0;
+    transform: translateX(8%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+    gap: 20px;
+  }
+
+  .product-card {
+    position: relative;
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(14px);
+    cursor: pointer;
+    transition:
+      transform 0.22s ease,
+      box-shadow 0.22s ease,
+      border-color 0.22s ease,
+      background 0.22s ease;
+  }
+
+  .product-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(135deg, rgba(79,70,229,0.08), rgba(6,182,212,0.04), transparent 40%);
+    opacity: 0;
+    transition: opacity 0.22s ease;
+    pointer-events: none;
+  }
+
+  .product-card:hover {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(255, 255, 255, 0.22);
+    background: rgba(255,255,255,0.84);
+  }
+
+  .product-card:hover::before {
+    opacity: 1;
+  }
+
+  .product-image {
+    aspect-ratio: 1 / 1;
+    background:
+      radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 35%),
+      linear-gradient(180deg, rgba(255,255,255,0.85), rgba(246,249,255,0.95));
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: transparent;
+  }
+
+  .product-body {
+    padding: 17px;
+  }
+
+  .product-title {
+    margin: 0 0 10px;
+    font-size: 1.02rem;
+    line-height: 1.42;
+    color: var(--text);
+    letter-spacing: -0.015em;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 4.35em;
+  }
+
+  .product-meta {
+    display: grid;
+    gap: 7px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .product-meta strong {
+    color: var(--text-soft);
+    font-weight: 650;
+  }
+
+  .empty-state,
+  .loading-state,
+  .error-state {
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: var(--panel-strong);
+    color: var(--muted);
+    box-shadow: var(--shadow);
+    text-align: center;
+    backdrop-filter: blur(14px);
+  }
+
+  .error-state {
+    color: #991b1b;
+    border-color: rgba(239, 68, 68, 0.22);
+    background: rgba(255, 245, 245, 0.92);
+  }
+
+  .detail-header {
+    display: flex;
+    gap: 22px;
+    align-items: flex-start;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-shadow: var(--glow);
+    border-radius: 26px;
+    padding: 24px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    backdrop-filter: blur(16px);
+  }
+
+  .back-btn {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.8);
+    color: var(--text);
+    padding: 11px 15px;
+    border-radius: 14px;
+    font-weight: 650;
+    cursor: pointer;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+    transition:
+      border-color 0.18s ease,
+      background 0.18s ease,
+      color 0.18s ease,
+      transform 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .back-btn:hover {
+    border-color: rgba(79, 70, 229, 0.32);
+    color: var(--accent);
+    background: rgba(255,255,255,0.96);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 26px rgba(138, 137, 160, 0.1);
+  }
+
+  .detail-gallery {
+    flex: 0 0 320px;
+    max-width: 320px;
+    width: 100%;
+  }
+
+  .detail-main-image {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 12px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+  }
+
+  .thumb-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .thumb-row img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    background: rgba(255,255,255,0.82);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 5px;
+    cursor: pointer;
+    flex: 0 0 auto;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .thumb-row img:hover {
+    transform: translateY(-2px);
+    border-color: rgba(79, 70, 229, 0.26);
+    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.08);
+  }
+
+  .detail-info {
+    flex: 1 1 400px;
+    min-width: 280px;
+  }
+
+  .detail-info h2 {
+    margin: 0 0 12px;
+    line-height: 1.2;
+    font-size: clamp(1.45rem, 2vw, 2.15rem);
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+
+  .meta-pills {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 0 0 14px;
+  }
+
+  .pill {
+    border-radius: 999px;
+    padding: 6px 11px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background: rgba(255,255,255,0.72);
+    color: var(--muted);
+    font-size: 13px;
+    backdrop-filter: blur(10px);
+  }
+
+  .detail-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .summary-box {
+    background: rgba(255,255,255,0.76);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 15px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    backdrop-filter: blur(12px);
+  }
+
+  .summary-box .small {
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    margin-bottom: 7px;
+  }
+
+  .summary-box .big {
+    font-size: 1.08rem;
+    font-weight: 750;
+    line-height: 1.35;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .detail-layout {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 22px;
+    align-items: start;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(14px);
+  }
+
+  .panel h3 {
+    margin: 0 0 14px;
+    font-size: 19px;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .aspect-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .aspect-rank,
+  .aspect-count {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .aspect-name {
+    font-weight: 650;
+    text-transform: capitalize;
+    font-size: 0.94rem;
+    color: var(--text);
+  }
+
+  .aspect-bar {
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+    background: linear-gradient(90deg, rgba(226,232,240,0.9), rgba(241,245,249,0.9));
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+  }
+
+  .bar-positive,
+  .bar-negative {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .bar-positive {
+    background: linear-gradient(90deg, #16a34a, #22c55e, #4ade80);
+  }
+
+  .bar-negative {
+    background: linear-gradient(90deg, #dc2626, #ef4444, #f87171);
+  }
+
+  .aspect-count {
+    text-align: right;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .aspect-chevron {
+    color: var(--muted);
+    font-size: 14px;
+    text-align: right;
+    transition: transform 0.28s ease, color 0.2s ease;
+  }
+
+  .aspect-item.open .aspect-chevron {
+    transform: rotate(180deg);
+    color: var(--accent);
+  }
+
+  .bullet-list {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 10px;
+    color: var(--text);
+  }
+
+  .footer-note {
+    margin-top: 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  code {
+    background: rgba(255,255,255,0.78);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 2px 6px;
+    border-radius: 8px;
+  }
+
+  a {
+    color: var(--accent);
+  }
+
+  .store-back-row {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 18px;
+  }
+
+  .aspect-item {
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(255,255,255,0.66);
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .aspect-item:hover {
+    border-color: rgba(79, 70, 229, 0.22);
+    background: rgba(255,255,255,0.82);
+    box-shadow: 0 14px 28px rgba(79, 70, 229, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .aspect-item:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .aspect-trigger {
+    display: grid;
+    grid-template-columns: 52px minmax(140px, 220px) 1fr 52px 28px;
+    gap: 14px;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px 13px;
+    user-select: none;
+  }
+
+  .aspect-trigger:hover .aspect-name {
+    color: var(--accent);
+  }
+
+  .aspect-meta-wrap {
+    min-width: 0;
+  }
+
+  .aspect-detail {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin: 0 18px;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    padding: 0 16px;
+    background: rgba(248, 250, 255, 0.9);
+    transition:
+      max-height 0.35s ease,
+      opacity 0.25s ease,
+      margin-top 0.35s ease,
+      padding-top 0.35s ease,
+      padding-bottom 0.35s ease,
+      border-color 0.35s ease;
+  }
+
+  .aspect-item.open .aspect-detail {
+    max-height: 500px;
+    opacity: 1;
+    margin: 0 18px 18px;
+    padding: 16px;
+    border-color: rgba(79, 70, 229, 0.12);
+  }
+
+  .aspect-item.open {
+    border-color: rgba(79, 70, 229, 0.24);
+    background: rgba(255,255,255,0.86);
+  }
+
+  .aspect-detail-desc {
+    color: #4b5c77;
+    font-style: italic;
+    margin-bottom: 12px;
+  }
+
+  .aspect-detail-review {
+    border-left: 3px solid rgba(79, 70, 229, 0.28);
+    padding-left: 14px;
+    line-height: 1.68;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+
+  .aspect-detail-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .aspect-sentiment-negative {
+    color: var(--red);
+    font-weight: 700;
+  }
+
+  .aspect-sentiment-positive {
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  .aspect-sentiment-neutral {
+    color: #64748b;
+    font-weight: 700;
+  }
+
+  .chart-panel {
+    grid-column: 1 / -1;
+  }
+
+  .chart-row-3 {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 0.8fr;
+    gap: 18px;
+  }
+
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 340px;
+  }
+
+  .chart-wrap.small {
+    height: 300px;
+  }
+
+  .store-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.62);
+    width: fit-content;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+  }
+
+  .store-tab-btn {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--muted);
+    padding: 10px 16px;
+    font-weight: 650;
+    font-size: 14px;
+    cursor: pointer;
+    transition:
+      color 0.18s ease,
+      background 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.18s ease;
+    border-radius: 12px;
+  }
+
+  .store-tab-btn:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.65);
+  }
+
+  .store-tab-btn.active {
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 10px 22px rgba(255, 255, 255, 0.22);
+  }
+
+  .store-tab-panel.hidden {
+    display: none;
+  }
+
+  .aspect-breakdown-panel {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 1080px) {
+    .stats-row {
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .detail-summary {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .detail-layout,
+    .chart-row-3 {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .app-shell {
+      width: min(100%, calc(100% - 24px));
+      padding: 20px 0 36px;
+    }
+
+    .topbar {
+      padding: 22px;
+      border-radius: 24px;
+    }
+
+    .stats-row,
+    .detail-summary,
+    .detail-layout,
+    .chart-row-3 {
+      grid-template-columns: 1fr;
+    }
+
+    .aspect-trigger {
+      grid-template-columns: 40px 1fr 24px;
+      gap: 12px;
+      padding: 14px 14px;
+    }
+
+    .aspect-bar {
+      grid-column: 1 / -1;
+    }
+
+    .aspect-count {
+      grid-column: 2 / 3;
+      text-align: left;
+    }
+
+    .aspect-chevron {
+      grid-column: 3 / 4;
+      grid-row: 1;
+    }
+
+    .aspect-detail {
+      margin: 0 12px;
+    }
+
+    .aspect-item.open .aspect-detail {
+      margin: 0 12px 12px;
+    }
+
+    .store-tabs {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .topbar {
+      grid-template-columns: 1fr;
+      align-items: start;
+    }
+
+    .controls {
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="title-wrap">
+        <h1>Amazon Review Insights Dashboard</h1>
+        <p>Browse stores first, then open a store to explore its products and review insights.</p>
+      </div>
+      <div class="controls">
+        <select id="storeSelect">
+          <option value="">All stores</option>
+        </select>
+        <input id="searchInput" type="text" placeholder="Search product title or ASIN" />
+      </div>
+    </div>
+
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="label" id="storesLabel">Stores</div>
+        <div class="value" id="storesCount">-</div>
+      </div>
+
+      <div class="stat-card" id="productsCard">
+        <div class="label">Products shown</div>
+        <div class="value" id="productsCount">-</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Avg rating</div>
+        <div class="value" id="avgRating">-</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Review mentions</div>
+        <div class="value" id="mentionCount">-</div>
+      </div>
+    </div>
+
+    <div class="page-stack">
+      <section id="listPage" class="page">
+        <div id="listContent" class="loading-state">Loading dashboard data...</div>
+      </section>
+
+      <section id="detailPage" class="page hidden-right"></section>
+    </div>
+
+    <div class="footer-note">
+      Uses <code>joined_data.jsonl</code> and <code>review_sentiment_counts.jsonl</code> from the same folder as this HTML file.
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const DATA_FILES = {
+      joined: 'joined_data.jsonl',
+      sentimentCounts: 'review_sentiment_counts.jsonl'
+    };
+
+    const state = {
+      rawJoinedRows: [],
+      rawSentimentRows: [],
+      products: [],
+      filteredProducts: [],
+      stores: [],
+      storeSummaries: [],
+      filteredStores: [],
+      selectedStore: '',
+      searchTerm: '',
+      selectedProduct: null,
+      storeNegativeProducts: new Map(),
+      storeAspectSummary: new Map(),
+      storeSentimentSummary: new Map(),
+      charts: {},
+      activeStoreTab: 'summary'
+    };
+
+    const els = {
+      storeSelect: document.getElementById('storeSelect'),
+      searchInput: document.getElementById('searchInput'),
+      listContent: document.getElementById('listContent'),
+      listPage: document.getElementById('listPage'),
+      detailPage: document.getElementById('detailPage'),
+      statsRow: document.getElementById('statsRow'),
+      storesLabel: document.getElementById('storesLabel'),
+      storesCount: document.getElementById('storesCount'),
+      productsCard: document.getElementById('productsCard'),
+      productsCount: document.getElementById('productsCount'),
+      avgRating: document.getElementById('avgRating'),
+      mentionCount: document.getElementById('mentionCount')
+    };
+
+    async function fetchJSONL(path) {
+      const response = await fetch(path);
+      if (!response.ok) {
+        throw new Error(`Could not load ${path}. Make sure the file exists in the same folder.`);
+      }
+      const text = await response.text();
+      return text
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(line => JSON.parse(line));
+    }
+
+    function safeArray(value) {
+      return Array.isArray(value) ? value : [];
+    }
+
+    function titleCase(text) {
+      if (!text) return 'Unknown';
+      return String(text)
+        .split(/[_\s-]+/)
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(' ');
+    }
+
+    function pickMainImage(images) {
+      const list = safeArray(images);
+      if (!list.length) return 'https://via.placeholder.com/500x500?text=No+Image';
+      return list[0].hi_res || list[0].large || list[0].thumb || 'https://via.placeholder.com/500x500?text=No+Image';
+    }
+
+    function formatNumber(value) {
+      if (value == null || Number.isNaN(Number(value))) return '-';
+      return Number(value).toLocaleString();
+    }
+
+    function formatRating(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n.toFixed(1) : 'N/A';
+    }
+
+    function summariseStoreName(store, fallbackTitle) {
+      return store || fallbackTitle?.split(' ')[0] || 'Unknown';
+    }
+
+    function escapeHTML(str) {
+      return String(str ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function destroyChart(key) {
+      if (state.charts[key]) {
+        state.charts[key].destroy();
+        delete state.charts[key];
+      }
+    }
+
+    function destroyListCharts() {
+      destroyChart('storeComplaintConcentration');
+      destroyChart('storeTopComplaintAspects');
+      destroyChart('storeSentimentDonut');
+    }
+
+    function destroyDetailCharts() {
+      destroyChart('productAspect');
+      destroyChart('productSentimentDonut');
+    }
+
+    function buildProducts(joinedRows) {
+      const productsMap = new Map();
+
+      for (const row of joinedRows) {
+        const asin = row.parent_asin;
+        if (!asin) continue;
+
+        if (!productsMap.has(asin)) {
+          productsMap.set(asin, {
+            parent_asin: asin,
+            title: row.title || 'Untitled product',
+            store: summariseStoreName(row.store, row.title),
+            main_category: row.main_category || 'Unknown category',
+            average_rating: row.average_rating,
+            rating_number: row.rating_number,
+            features: safeArray(row.features),
+            description: safeArray(row.description),
+            images: safeArray(row.images),
+            productSentiment: {
+                positive: 0,
+                negative: 0,
+                total: 0
+            },
+            aspects: [],
+            total_mentions: 0,
+            avg_helpful_prob: 0,
+            helpful_prob_count: 0
+          });
+        }
+
+        const product = productsMap.get(asin);
+
+        if ((!product.title || product.title === 'Untitled product') && row.title) {
+          product.title = row.title;
+        }
+
+        if ((!product.store || product.store === 'Unknown') && row.store) {
+          product.store = summariseStoreName(row.store, row.title);
+        }
+
+        if ((!product.main_category || product.main_category === 'Unknown category') && row.main_category) {
+          product.main_category = row.main_category;
+        }
+
+        if ((!product.features || !product.features.length) && Array.isArray(row.features) && row.features.length) {
+          product.features = row.features;
+        }
+
+        if ((!product.description || !product.description.length) && Array.isArray(row.description) && row.description.length) {
+          product.description = row.description;
+        }
+
+        if ((!product.images || !product.images.length) && Array.isArray(row.images) && row.images.length) {
+          product.images = row.images;
+        }
+
+        if ((product.average_rating == null || product.average_rating === '') && row.average_rating != null) {
+          product.average_rating = row.average_rating;
+        }
+
+        if ((product.rating_number == null || product.rating_number === '') && row.rating_number != null) {
+          product.rating_number = row.rating_number;
+        }
+
+        const mentionCount = Number(row.mention_count || 0);
+        const aspectSentiment = String(row.sentiment || '').toLowerCase();
+
+        if (aspectSentiment === 'positive') {
+            product.productSentiment.positive += mentionCount;
+        } else if (aspectSentiment === 'negative') {
+            product.productSentiment.negative += mentionCount;
+        }
+
+        product.productSentiment.total += mentionCount;
+
+        const helpfulProb = Number(row.mean_helpful_prob);
+
+        const existingAspect = product.aspects.find(item => item.aspect === row.aspect);
+
+        if (existingAspect) {
+          existingAspect[aspectSentiment] = (existingAspect[aspectSentiment] || 0) + mentionCount;
+          existingAspect.total += mentionCount;
+
+          if (!existingAspect.example_description && row.example_description) {
+            existingAspect.example_description = row.example_description;
+          }
+
+          if (!existingAspect.example_review && row.example_review) {
+            existingAspect.example_review = row.example_review;
+          }
+
+          if (!existingAspect.example_sentiment && row.sentiment) {
+            existingAspect.example_sentiment = row.sentiment;
+          }
+
+          if ((existingAspect.mean_rating == null || existingAspect.mean_rating === '') && row.mean_rating != null) {
+            existingAspect.mean_rating = row.mean_rating;
+          }
+        } else {
+          product.aspects.push({
+            aspect: row.aspect || 'unknown',
+            positive: aspectSentiment === 'positive' ? mentionCount : 0,
+            negative: aspectSentiment === 'negative' ? mentionCount : 0,
+            neutral: aspectSentiment === 'neutral' ? mentionCount : 0,
+            total: mentionCount,
+            mean_rating: row.mean_rating,
+            example_description: row.example_description || '',
+            example_review: row.example_review || '',
+            example_sentiment: row.sentiment || ''
+          });
+        }
+
+        product.total_mentions += mentionCount;
+
+        if (Number.isFinite(helpfulProb)) {
+          product.avg_helpful_prob += helpfulProb;
+          product.helpful_prob_count += 1;
+        }
+      }
+
+      const products = [...productsMap.values()].map(product => {
+        const avgHelpful = product.helpful_prob_count
+          ? product.avg_helpful_prob / product.helpful_prob_count
+          : null;
+
+        product.avg_helpful_prob = avgHelpful;
+        product.aspects.sort((a, b) => b.total - a.total);
+        product.image = pickMainImage(product.images);
+        return product;
+      });
+
+      products.sort((a, b) => (b.rating_number || 0) - (a.rating_number || 0));
+      return products;
+    }
+
+    function truncateText(text, maxLength = 260) {
+        const clean = String(text || '').replace(/\s+/g, ' ').trim();
+        if (clean.length <= maxLength) return clean;
+        return clean.slice(0, maxLength).trimEnd() + '...';
+    }
+
+    function buildStoreSummaries(products) {
+      return state.stores.map(storeName => {
+        const storeProducts = products.filter(item => item.store === storeName);
+        const totalNegative = storeProducts.reduce((sum, item) => sum + Number(item.productSentiment?.negative || 0), 0);
+        const avgRatingBase = storeProducts
+          .map(item => Number(item.average_rating))
+          .filter(Number.isFinite);
+        const avgRating = avgRatingBase.length
+          ? avgRatingBase.reduce((a, b) => a + b, 0) / avgRatingBase.length
+          : null;
+        const totalMentions = storeProducts.reduce((sum, item) => sum + Number(item.total_mentions || 0), 0);
+        const heroProduct = [...storeProducts].sort((a, b) => Number(b.rating_number || 0) - Number(a.rating_number || 0))[0] || null;
+
+        return {
+          store: storeName,
+          productCount: storeProducts.length,
+          totalNegative,
+          avgRating,
+          totalMentions,
+          image: heroProduct?.image || 'https://via.placeholder.com/500x500?text=No+Image',
+          topProductTitle: heroProduct?.title || 'No product available'
+        };
+      }).sort((a, b) => {
+        if (b.totalNegative !== a.totalNegative) return b.totalNegative - a.totalNegative;
+        return a.store.localeCompare(b.store);
+      });
+    }
+
+    function buildStoreInsights(products, joinedRows) {
+        const negativeByStoreProduct = new Map();
+        const aspectByStore = new Map();
+        const sentimentByStore = new Map();
+
+        const productLookup = new Map(
+            products.map(product => [product.parent_asin, product])
+        );
+
+        joinedRows.forEach(row => {
+            const asin = row.parent_asin;
+            const product = productLookup.get(asin);
+            if (!product) return;
+
+            const store = product.store || 'Unknown';
+            const sentiment = String(row.sentiment || '').toLowerCase();
+            const count = Number(row.mention_count || 0);
+            const aspect = row.aspect || 'unknown';
+
+            if (!negativeByStoreProduct.has(store)) {
+            negativeByStoreProduct.set(store, new Map());
+            }
+
+            if (!aspectByStore.has(store)) {
+            aspectByStore.set(store, new Map());
+            }
+
+            if (!sentimentByStore.has(store)) {
+            sentimentByStore.set(store, { positive: 0, negative: 0, neutral: 0 });
+            }
+
+            if (sentiment === 'negative') {
+            const productMap = negativeByStoreProduct.get(store);
+            const existing = productMap.get(asin) || {
+                asin,
+                title: product.title,
+                negative_mentions: 0
+            };
+
+            existing.negative_mentions += count;
+            productMap.set(asin, existing);
+
+            const aspectMap = aspectByStore.get(store);
+            aspectMap.set(aspect, (aspectMap.get(aspect) || 0) + count);
+            }
+
+            if (sentimentByStore.get(store)[sentiment] != null) {
+            sentimentByStore.get(store)[sentiment] += count;
+            }
+        });
+
+        const normalizedNegativeByStoreProduct = new Map();
+        for (const [store, productMap] of negativeByStoreProduct.entries()) {
+            normalizedNegativeByStoreProduct.set(
+            store,
+            [...productMap.values()].sort((a, b) => b.negative_mentions - a.negative_mentions)
+            );
+        }
+
+        state.storeNegativeProducts = normalizedNegativeByStoreProduct;
+        state.storeAspectSummary = aspectByStore;
+        state.storeSentimentSummary = sentimentByStore;
+    }
+
+    function updateStoreDropdown() {
+        els.storeSelect.innerHTML = '';
+        for (const store of state.stores) {
+            const option = document.createElement('option');
+            option.value = store;
+            option.textContent = store;
+            els.storeSelect.appendChild(option);
+        }
+        els.storeSelect.value = state.selectedStore;
+    }
+
+    function applyFilters() {
+      const search = state.searchTerm.trim().toLowerCase();
+
+      state.filteredStores = state.storeSummaries.filter(store => {
+        return !search ||
+          store.store.toLowerCase().includes(search) ||
+          store.topProductTitle.toLowerCase().includes(search);
+      });
+
+      state.filteredProducts = state.products.filter(product => {
+        const matchesStore = !state.selectedStore || product.store === state.selectedStore;
+        const matchesSearch = !search ||
+          product.title.toLowerCase().includes(search) ||
+          product.parent_asin.toLowerCase().includes(search);
+        return matchesStore && matchesSearch;
+      });
+
+      state.filteredProducts.sort((a, b) => {
+        const aNeg = Number(a.productSentiment?.negative || 0);
+        const bNeg = Number(b.productSentiment?.negative || 0);
+
+        if (bNeg !== aNeg) return bNeg - aNeg;
+        return (b.rating_number || 0) - (a.rating_number || 0);
+      });
+
+      renderStats();
+      renderStorePage();
+    }
+
+    function renderStats() {
+        const productsVisible = state.filteredProducts;
+
+        const ratings = productsVisible
+            .map(item => Number(item.average_rating))
+            .filter(Number.isFinite);
+
+        const mentions = productsVisible.reduce(
+            (sum, item) => sum + Number(item.total_mentions || 0),
+            0
+        );
+
+        const avg = ratings.length
+            ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+            : '-';
+
+        els.statsRow.classList.remove('three-cards');
+        els.storesLabel.textContent = 'Store';
+        els.storesCount.textContent = state.selectedStore || '-';
+        els.productsCard.style.display = '';
+        els.productsCount.textContent = formatNumber(productsVisible.length);
+        els.avgRating.textContent = avg;
+        els.mentionCount.textContent = formatNumber(mentions);
+    }
+
+    function renderStoreGrid() {
+      destroyListCharts();
+
+      if (!state.filteredStores.length) {
+        els.listContent.className = 'empty-state';
+        els.listContent.innerHTML = 'No stores found for this filter.';
+        return;
+      }
+
+      els.listContent.className = 'card-grid';
+      els.listContent.innerHTML = state.filteredStores.map(store => {
+        return `
+          <article class="product-card store-card" data-store="${escapeHTML(store.store)}">
+            <div class="product-image">
+              <img src="${store.image}" alt="${escapeHTML(store.store)}" loading="lazy" />
+            </div>
+            <div class="product-body">
+              <h3 class="product-title">${escapeHTML(store.store)}</h3>
+              <div class="product-meta">
+                <div><strong>Products:</strong> ${formatNumber(store.productCount)}</div>
+                <div><strong>Average rating:</strong> ${store.avgRating != null ? store.avgRating.toFixed(1) : 'N/A'}</div>
+                <div><strong>Negative reviews:</strong> ${formatNumber(store.totalNegative)}</div>
+                <div><strong>Review mentions:</strong> ${formatNumber(store.totalMentions)}</div>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.store-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const storeName = card.dataset.store;
+          state.selectedStore = storeName;
+          updateStoreDropdown();
+          applyFilters();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    }
+
+    function renderStorePage() {
+        destroyListCharts();
+
+        if (!state.filteredProducts.length) {
+            els.listContent.className = 'empty-state';
+            els.listContent.innerHTML = 'No products found for this store.';
+            return;
+        }
+
+        els.listContent.className = '';
+        const storeName = state.selectedStore;
+        const complaintItems = (state.storeNegativeProducts.get(storeName) || [])
+            .filter(item => item.negative_mentions > 0);
+
+        const topComplaintItems = complaintItems.slice(0, 10);
+
+        const totalNegativeMentions = complaintItems.reduce((sum, item) => sum + item.negative_mentions, 0);
+        const top3Share = totalNegativeMentions > 0
+            ? ((complaintItems.slice(0, 3).reduce((sum, item) => sum + item.negative_mentions, 0) / totalNegativeMentions) * 100).toFixed(1)
+            : '0.0';
+
+        const topAspectEntries = [...(state.storeAspectSummary.get(storeName)?.entries() || [])]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10);
+
+        const storeSentiment = state.storeSentimentSummary.get(storeName) || { positive: 0, negative: 0, neutral: 0 };
+
+        const tabs = `
+            <div class="store-tabs">
+            <button class="store-tab-btn ${state.activeStoreTab === 'summary' ? 'active' : ''}" data-tab="summary">
+                Store Summary Stats
+            </button>
+            <button class="store-tab-btn ${state.activeStoreTab === 'products' ? 'active' : ''}" data-tab="products">
+                Products
+            </button>
+            </div>
+        `;
+
+        const chartPanels = `
+            <div id="storeSummaryPanel" class="store-tab-panel ${state.activeStoreTab === 'summary' ? '' : 'hidden'}">
+            <div class="chart-row-3" style="margin-bottom:18px;">
+                <section class="panel">
+                <h3>Complaint concentration</h3>
+                <div style="color:var(--muted); margin-bottom:12px; font-size:0.92rem;">
+                    Top 3 products account for ${top3Share}% of this store’s negative complaint mentions.
+                </div>
+                <div class="chart-wrap"><canvas id="storeComplaintConcentrationChart"></canvas></div>
+                </section>
+
+                <section class="panel">
+                <h3>Top complaint aspects in this store</h3>
+                <div class="chart-wrap"><canvas id="storeTopComplaintAspectsChart"></canvas></div>
+                </section>
+
+                <section class="panel">
+                <h3>Store sentiment</h3>
+                <div class="chart-wrap small"><canvas id="storeSentimentDonutChart"></canvas></div>
+                </section>
+            </div>
+            </div>
+        `;
+
+        const productGrid = `
+            <div id="storeProductsPanel" class="store-tab-panel ${state.activeStoreTab === 'products' ? '' : 'hidden'}">
+            <div class="card-grid">
+                ${state.filteredProducts.map(product => {
+                const sentiment = product.productSentiment || {};
+                const totalReviews = sentiment.total || product.rating_number || 0;
+
+                return `
+                    <article class="product-card" data-asin="${product.parent_asin}">
+                    <div class="product-image">
+                        <img src="${product.image}" alt="${escapeHTML(product.title)}" loading="lazy" />
+                    </div>
+                    <div class="product-body">
+                        <h3 class="product-title">${escapeHTML(product.title)}</h3>
+                        <div class="product-meta">
+                        <div><strong>ASIN:</strong> ${escapeHTML(product.parent_asin)}</div>
+                        <div><strong>Category:</strong> ${escapeHTML(product.main_category || 'N/A')}</div>
+                        <div><strong>Rating:</strong> ${formatRating(product.average_rating)} (${formatNumber(product.rating_number)})</div>
+                        <div><strong>Negative reviews:</strong> ${formatNumber(sentiment.negative || 0)}</div>
+                        <div><strong>Review sentiment total:</strong> ${formatNumber(totalReviews)}</div>
+                        </div>
+                    </div>
+                    </article>
+                `;
+                }).join('')}
+            </div>
+            </div>
+        `;
+
+        els.listContent.innerHTML = tabs + chartPanels + productGrid;
+
+        document.querySelectorAll('.store-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+            state.activeStoreTab = btn.dataset.tab;
+            renderStorePage();
+            });
+        });
+
+        if (state.activeStoreTab === 'summary') {
+            renderStoreCharts(storeName, topComplaintItems, topAspectEntries, storeSentiment);
+        }
+
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('click', () => openProduct(card.dataset.asin));
+        });
+    }
+
+    function renderStoreCharts(storeName, complaintItems, topAspectEntries, storeSentiment) {
+      destroyListCharts();
+
+      const concentrationCanvas = document.getElementById('storeComplaintConcentrationChart');
+      if (concentrationCanvas) {
+        const labels = complaintItems.map(item => {
+          const t = item.title || item.asin;
+          return t.length > 30 ? `${t.slice(0, 30)}…` : t;
+        });
+
+        const negatives = complaintItems.map(item => item.negative_mentions);
+        const total = negatives.reduce((a, b) => a + b, 0) || 1;
+        let running = 0;
+        const cumulative = negatives.map(v => {
+          running += v;
+          return Number(((running / total) * 100).toFixed(1));
+        });
+
+        state.charts.storeComplaintConcentration = new Chart(concentrationCanvas, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              {
+                type: 'bar',
+                label: 'Negative complaint mentions',
+                data: negatives,
+                backgroundColor: 'rgba(239, 68, 68, 0.78)',
+                borderColor: 'rgba(220, 38, 38, 1)',
+                borderWidth: 1,
+                yAxisID: 'y'
+              },
+              {
+                type: 'line',
+                label: 'Cumulative %',
+                data: cumulative,
+                borderColor: 'rgba(79, 70, 229, 1)',
+                backgroundColor: 'rgba(79, 70, 229, 1)',
+                tension: 0.3,
+                pointRadius: 3,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#334155' } }
+            },
+            scales: {
+              x: {
+                ticks: { color: '#64748b', maxRotation: 45, minRotation: 45 },
+                grid: { color: 'rgba(100, 116, 139, 0.16)' }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: { color: '#64748b' },
+                grid: { color: 'rgba(100, 116, 139, 0.16)' }
+              },
+              y1: {
+                beginAtZero: true,
+                max: 100,
+                position: 'right',
+                ticks: {
+                  color: '#64748b',
+                  callback: value => `${value}%`
+                },
+                grid: { drawOnChartArea: false }
+              }
+            }
+          }
+        });
+      }
+
+      const aspectsCanvas = document.getElementById('storeTopComplaintAspectsChart');
+      if (aspectsCanvas) {
+        state.charts.storeTopComplaintAspects = new Chart(aspectsCanvas, {
+          type: 'bar',
+          data: {
+            labels: topAspectEntries.map(([aspect]) => titleCase(aspect)),
+            datasets: [{
+              label: 'Negative mentions',
+              data: topAspectEntries.map(([, count]) => count),
+              backgroundColor: 'rgba(239, 68, 68, 0.78)',
+              borderColor: 'rgba(220, 38, 38, 1)',  
+              borderWidth: 1
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#334155' } }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: { color: '#64748b' },
+                grid: { color: 'rgba(100, 116, 139, 0.16)' }
+              },
+              y: {
+                ticks: { color: '#64748b' },
+                grid: { color: 'rgba(100, 116, 139, 0.16)' }
+              }
+            }
+          }
+        });
+      }
+
+      const donutCanvas = document.getElementById('storeSentimentDonutChart');
+      if (donutCanvas) {
+        state.charts.storeSentimentDonut = new Chart(donutCanvas, {
+          type: 'doughnut',
+          data: {
+            labels: ['Positive', 'Negative'],
+            datasets: [{
+              data: [
+                Number(storeSentiment.positive || 0),
+                Number(storeSentiment.negative || 0)
+              ],
+              backgroundColor: [
+                'rgba(74, 222, 128, 0.85)',
+                'rgba(248, 113, 113, 0.85)'
+              ],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#334155' } }
+            }
+          }
+        });
+      }
+    }
+
+    function renderAspectBreakdown(aspects) {
+      if (!aspects.length) {
+        return '<div class="empty-state">No aspect data available for this product.</div>';
+      }
+
+      return `
+        <div class="aspect-list">
+          ${aspects.map((aspect, index) => {
+            const positive = Number(aspect.positive || 0);
+            const negative = Number(aspect.negative || 0);
+            const neutral = Number(aspect.neutral || 0);
+            const totalForBar = Math.max(positive + negative, 1);
+            const positivePct = Math.round((positive / totalForBar) * 100);
+            const negativePct = Math.round((negative / totalForBar) * 100);
+            const totalShown = positive + negative + neutral;
+            const sentimentClass =
+              aspect.example_sentiment === 'negative' ? 'aspect-sentiment-negative' :
+              aspect.example_sentiment === 'positive' ? 'aspect-sentiment-positive' :
+              'aspect-sentiment-neutral';
+
+            return `
+              <div class="aspect-item" data-aspect-index="${index}">
+                <div class="aspect-trigger">
+                    <div class="aspect-rank">${String(index + 1).padStart(2, '0')}</div>
+
+                    <div class="aspect-meta-wrap">
+                        <div class="aspect-name">${escapeHTML(titleCase(aspect.aspect))}</div>
+                    </div>
+
+                    <div class="aspect-bar">
+                        ${positive > 0 ? `<div class="bar-positive" style="width:${positivePct}%">${positivePct}%</div>` : ''}
+                        ${negative > 0 ? `<div class="bar-negative" style="width:${negativePct}%">${negativePct}%</div>` : ''}
+                        ${positive === 0 && negative === 0 ? `<div class="bar-negative" style="width:100%">No polarity data</div>` : ''}
+                    </div>
+
+                    <div class="aspect-count">◆ ${formatNumber(totalShown)}</div>
+                    <div class="aspect-chevron">⌄</div>
+                </div>
+
+                <div class="aspect-detail">
+                  ${aspect.example_description ? `
+                    <div class="aspect-detail-desc">“${escapeHTML(truncateText(aspect.example_description, 90))}”</div>
+                    ` : ''}
+
+                  ${aspect.example_review ? `
+                    <div class="aspect-detail-review">${escapeHTML(truncateText(aspect.example_review, 420))}</div>
+                    ` : '<div class="empty-state">No example review available for this aspect.</div>'}
+
+                  <div class="aspect-detail-footer">
+                    <div class="${sentimentClass}">${escapeHTML(titleCase(aspect.example_sentiment || 'unknown'))}</div>
+                    <div>Mentions: ${formatNumber(totalShown)}</div>
+                    <div>Avg rating of this aspect: ${Number.isFinite(Number(aspect.mean_rating)) ? Number(aspect.mean_rating).toFixed(1) : 'N/A'}</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function openProduct(asin) {
+      const product = state.products.find(item => item.parent_asin === asin);
+      if (!product) return;
+      state.selectedProduct = product;
+      renderDetailPage(product);
+      showDetailPage();
+      history.pushState({ asin }, '', `#${asin}`);
+    }
+
+    function renderDetailPage(product) {
+      const sentiment = product.productSentiment || {};
+      const gallery = safeArray(product.images);
+      const mainImage = product.image;
+
+      const featureList = product.features.length
+        ? `<ul class="bullet-list">${product.features.map(item => `<li>${escapeHTML(item)}</li>`).join('')}</ul>`
+        : '<div class="empty-state">No feature list available.</div>';
+
+      els.detailPage.innerHTML = `
+        <button class="back-btn" id="backBtn">← Back to products</button>
+
+        <div class="detail-header">
+          <div class="detail-gallery">
+            <img id="detailMainImage" class="detail-main-image" src="${mainImage}" alt="${escapeHTML(product.title)}" />
+            <div class="thumb-row">
+              ${gallery.map((img, idx) => {
+                const src = img.large || img.hi_res || img.thumb;
+                return `<img class="gallery-thumb" data-src="${src}" src="${src}" alt="Thumb ${idx + 1}" />`;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="detail-info">
+            <h2>${escapeHTML(product.title)}</h2>
+            <div class="meta-pills">
+              <div class="pill">Store: ${escapeHTML(product.store)}</div>
+              <div class="pill">ASIN: ${escapeHTML(product.parent_asin)}</div>
+              <div class="pill">Main category: ${escapeHTML(product.main_category)}</div>
+            </div>
+
+            <div class="detail-summary">
+              <div class="summary-box"><div class="small">Average rating</div><div class="big">${formatRating(product.average_rating)}</div></div>
+              <div class="summary-box"><div class="small">Rating count</div><div class="big">${formatNumber(product.rating_number)}</div></div>
+              <div class="summary-box"><div class="small">Aspect mentions</div><div class="big">${formatNumber(product.total_mentions)}</div></div>
+            </div>
+
+            <div class="detail-summary" style="margin-top:12px;">
+              <div class="summary-box"><div class="small">Positive reviews</div><div class="big">${formatNumber(sentiment.positive || 0)}</div></div>
+              <div class="summary-box"><div class="small">Neutral reviews</div><div class="big">${formatNumber(sentiment.neutral || 0)}</div></div>
+              <div class="summary-box"><div class="small">Negative reviews</div><div class="big">${formatNumber(sentiment.negative || 0)}</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-layout">
+            <div style="display:grid; gap:22px;">
+                <section class="panel">
+                <h3>Aspect sentiment chart</h3>
+                <div class="chart-wrap"><canvas id="productAspectChart"></canvas></div>
+                </section>
+            </div>
+
+            <div style="display:grid; gap:22px;">
+                <section class="panel">
+                <h3>Sentiment distribution</h3>
+                <div class="chart-wrap small"><canvas id="productSentimentDonutChart"></canvas></div>
+                </section>
+
+                
+            </div>
+
+            <section class="panel aspect-breakdown-panel">
+                <h3>ASPECT BREAKDOWN</h3>
+                <div style="color:var(--muted); margin-bottom:16px; font-size:0.92rem;">
+                Click an aspect to open an example review. Green = positive mentions, red = negative mentions.
+                </div>
+                ${renderAspectBreakdown(product.aspects)}
+            </section>
+        </div>
+      `;
+
+      document.getElementById('backBtn').addEventListener('click', closeDetailPage);
+
+      document.querySelectorAll('.gallery-thumb').forEach(img => {
+        img.addEventListener('click', () => {
+          const main = document.getElementById('detailMainImage');
+          main.src = img.dataset.src;
+        });
+      });
+
+      document.querySelectorAll('.aspect-trigger').forEach(trigger => {
+        trigger.addEventListener('click', () => {
+          const item = trigger.closest('.aspect-item');
+          item.classList.toggle('open');
+        });
+      });
+
+      renderProductCharts(product);
+    }
+
+    function renderProductCharts(product) {
+      destroyDetailCharts();
+
+      const productAspectCanvas = document.getElementById('productAspectChart');
+      if (productAspectCanvas) {
+        const topAspects = product.aspects.slice(0, 8);
+
+        state.charts.productAspect = new Chart(productAspectCanvas, {
+          type: 'bar',
+          data: {
+            labels: topAspects.map(a => titleCase(a.aspect)),
+            datasets: [
+              {
+                label: 'Positive',
+                data: topAspects.map(a => Number(a.positive || 0)),
+                backgroundColor: 'rgba(34, 197, 94, 0.78)',
+                borderColor: 'rgba(22, 163, 74, 1)',
+                borderWidth: 1
+              },
+              {
+                label: 'Negative',
+                data: topAspects.map(a => Number(a.negative || 0)),
+                backgroundColor: 'rgba(239, 68, 68, 0.78)',
+                borderColor: 'rgba(220, 38, 38, 1)',
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#334155' } }
+            },
+            scales: {
+              x: {
+                stacked: true,
+                ticks: { color: '#64748b' },
+                grid: { color: 'rgba(100, 116, 139, 0.16)' }
+              },
+              y: {
+                stacked: true,
+                beginAtZero: true,
+                ticks: { color: '#64748b' },
+                grid: { color: 'rgba(100, 116, 139, 0.16)' }
+              }
+            }
+          }
+        });
+      }
+
+      const sentiment = product.productSentiment || {};
+      const productSentimentCanvas = document.getElementById('productSentimentDonutChart');
+      if (productSentimentCanvas) {
+        state.charts.productSentimentDonut = new Chart(productSentimentCanvas, {
+          type: 'doughnut',
+          data: {
+            labels: ['Positive', 'Negative'],
+            datasets: [{
+              data: [
+                Number(sentiment.positive || 0),
+                Number(sentiment.negative || 0)
+              ],
+              backgroundColor: [
+                'rgba(74, 222, 128, 0.85)',
+                'rgba(248, 113, 113, 0.85)'
+              ],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#334155' } }
+            }
+          }
+        });
+      }
+    }
+
+    function showDetailPage() {
+      els.listPage.classList.add('hidden-left');
+      els.detailPage.classList.remove('hidden-right');
+    }
+
+    function closeDetailPage() {
+      state.selectedProduct = null;
+      destroyDetailCharts();
+      els.detailPage.classList.add('hidden-right');
+      els.listPage.classList.remove('hidden-left');
+      history.pushState({}, '', location.pathname);
+    }
+
+    function handleHashOpen() {
+      const asin = location.hash.replace('#', '').trim();
+      if (!asin) return;
+      const product = state.products.find(item => item.parent_asin === asin);
+      if (product) {
+        state.selectedProduct = product;
+        renderDetailPage(product);
+        showDetailPage();
+      }
+    }
+
+    async function init() {
+      try {
+        const joinedRows = await fetchJSONL(DATA_FILES.joined);
+        state.products = buildProducts(joinedRows);
+        state.rawJoinedRows = joinedRows;
+
+        state.stores = [...new Set(state.products.map(item => item.store).filter(Boolean))].sort((a, b) => {
+          const aNeg = state.products
+            .filter(item => item.store === a)
+            .reduce((sum, item) => sum + Number(item.productSentiment?.negative || 0), 0);
+          const bNeg = state.products
+            .filter(item => item.store === b)
+            .reduce((sum, item) => sum + Number(item.productSentiment?.negative || 0), 0);
+
+          if (bNeg !== aNeg) return bNeg - aNeg;
+          return a.localeCompare(b);
+        });
+
+        state.storeSummaries = buildStoreSummaries(state.products);
+        buildStoreInsights(state.products, joinedRows);
+
+        state.selectedStore = state.stores[0] || '';
+
+        updateStoreDropdown();
+        applyFilters();
+        handleHashOpen();
+      } catch (error) {
+        console.error(error);
+        els.listContent.className = 'error-state';
+        els.listContent.innerHTML = `
+          <strong>Could not load dashboard data.</strong>
+          <div style="margin-top:10px;">${escapeHTML(error.message)}</div>
+          <div style="margin-top:10px;">Run this page through a local server and keep the JSONL files in the same folder.</div>
+        `;
+      }
+    }
+
+    els.storeSelect.addEventListener('change', (event) => {
+        state.selectedStore = event.target.value;
+        state.activeStoreTab = 'summary';
+        applyFilters();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    els.searchInput.addEventListener('input', (event) => {
+      state.searchTerm = event.target.value;
+      applyFilters();
+    });
+
+    window.addEventListener('popstate', () => {
+      if (location.hash) {
+        handleHashOpen();
+      } else {
+        closeDetailPage();
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>
