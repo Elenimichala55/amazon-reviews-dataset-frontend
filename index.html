@@ -830,10 +830,6 @@
     box-shadow: 0 10px 22px rgba(255, 255, 255, 0.22);
   }
 
-  .store-tab-panel.hidden {
-    display: none;
-  }
-
   .aspect-breakdown-panel {
     grid-column: 1 / -1;
   }
@@ -942,6 +938,40 @@
   position: relative;
   width: 100%;
   height: 320px;
+}
+
+.tab-stage {
+  position: relative;
+  overflow: hidden;
+  min-height: 520px;
+}
+
+.store-tab-panel {
+  width: 100%;
+  transition: transform 0.42s ease, opacity 0.42s ease;
+}
+
+.store-tab-panel.panel-active {
+  position: relative;
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.store-tab-panel.panel-left {
+  position: absolute;
+  inset: 0;
+  transform: translateX(-8%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.store-tab-panel.panel-right {
+  position: absolute;
+  inset: 0;
+  transform: translateX(8%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 @media (max-width: 960px) {
@@ -1680,114 +1710,189 @@
       });
     }
 
-    function renderStorePage() {
+    function switchStoreTab(nextTab) {
+      if (nextTab === state.activeStoreTab) return;
+
+      const summaryPanel = document.getElementById('storeSummaryPanel');
+      const productsPanel = document.getElementById('storeProductsPanel');
+      const tabButtons = document.querySelectorAll('.store-tab-btn');
+
+      if (!summaryPanel || !productsPanel) {
+        state.activeStoreTab = nextTab;
+        renderStorePage();
+        return;
+      }
+
+      const goingToProducts = nextTab === 'products';
+
+      if (goingToProducts) {
+        summaryPanel.classList.remove('panel-active', 'panel-right');
+        summaryPanel.classList.add('panel-left');
+
+        productsPanel.classList.remove('panel-left', 'panel-right');
+        productsPanel.classList.add('panel-active');
+      } else {
+        productsPanel.classList.remove('panel-active', 'panel-left');
+        productsPanel.classList.add('panel-right');
+
+        summaryPanel.classList.remove('panel-left', 'panel-right');
+        summaryPanel.classList.add('panel-active');
+      }
+
+      tabButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === nextTab);
+      });
+
+      state.activeStoreTab = nextTab;
+
+      if (nextTab === 'summary') {
         destroyListCharts();
 
-        if (!state.filteredProducts.length) {
-            els.listContent.className = 'empty-state';
-            els.listContent.innerHTML = 'No products found for this store.';
-            return;
-        }
-
-        els.listContent.className = '';
         const storeName = state.selectedStore;
         const complaintItems = (state.storeNegativeProducts.get(storeName) || [])
-            .filter(item => item.negative_mentions > 0);
-
-        const topComplaintItems = complaintItems.slice(0, 10);
-
-        const totalNegativeMentions = complaintItems.reduce((sum, item) => sum + item.negative_mentions, 0);
-        const top3Share = totalNegativeMentions > 0
-            ? ((complaintItems.slice(0, 3).reduce((sum, item) => sum + item.negative_mentions, 0) / totalNegativeMentions) * 100).toFixed(1)
-            : '0.0';
+          .filter(item => item.negative_mentions > 0);
 
         const topAspectEntries = [...(state.storeAspectSummary.get(storeName)?.entries() || [])]
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 10);
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10);
 
-        const storeSentiment = state.storeSentimentSummary.get(storeName) || { positive: 0, negative: 0, neutral: 0 };
+        const storeSentiment = state.storeSentimentSummary.get(storeName) || {
+          positive: 0,
+          negative: 0,
+          neutral: 0
+        };
 
-        const tabs = `
-            <div class="store-tabs">
-            <button class="store-tab-btn ${state.activeStoreTab === 'summary' ? 'active' : ''}" data-tab="summary">
-                Store Summary Stats
-            </button>
-            <button class="store-tab-btn ${state.activeStoreTab === 'products' ? 'active' : ''}" data-tab="products">
-                Products
-            </button>
-            </div>
+        setTimeout(() => {
+          renderStoreCharts(storeName, complaintItems.slice(0, 10), topAspectEntries, storeSentiment);
+          bindPrioritySection();
+        }, 220);
+      } else {
+        destroyListCharts();
+      }
+    }
 
-            
-        `;
-        const prioritySection = state.activeStoreTab === 'summary'
-                      ? renderPrioritySection()
-                      : '';
+    function renderStorePage() {
+      destroyListCharts();
 
-        const chartPanels = `
-            <div id="storeSummaryPanel" class="store-tab-panel ${state.activeStoreTab === 'summary' ? '' : 'hidden'}">
-              <div class="chart-row-3" style="margin-bottom:18px; grid-template-columns: 1fr 0.8fr;">
-                <section class="panel">
-                  <h3>Top complaint aspects in this store</h3>
-                  <div class="chart-wrap"><canvas id="storeTopComplaintAspectsChart"></canvas></div>
-                </section>
+      if (!state.filteredProducts.length) {
+        els.listContent.className = 'empty-state';
+        els.listContent.innerHTML = 'No products found for this store.';
+        return;
+      }
 
-                <section class="panel">
-                <h3>Store sentiment</h3>
-                <div class="chart-wrap small"><canvas id="storeSentimentDonutChart"></canvas></div>
-                </section>
-            </div>
-            </div>
-        `;
+      els.listContent.className = '';
+      const storeName = state.selectedStore;
 
-        const productGrid = `
-            <div id="storeProductsPanel" class="store-tab-panel ${state.activeStoreTab === 'products' ? '' : 'hidden'}">
-            <div class="card-grid">
-                ${state.filteredProducts.map(product => {
-                const sentiment = product.productSentiment || {};
-                const totalReviews = sentiment.total || product.rating_number || 0;
+      const complaintItems = (state.storeNegativeProducts.get(storeName) || [])
+        .filter(item => item.negative_mentions > 0);
 
-                return `
-                    <article class="product-card" data-asin="${product.parent_asin}">
-                    <div class="product-image">
-                        <img src="${product.image}" alt="${escapeHTML(product.title)}" loading="lazy" />
+      const topAspectEntries = [...(state.storeAspectSummary.get(storeName)?.entries() || [])]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+
+      const storeSentiment = state.storeSentimentSummary.get(storeName) || {
+        positive: 0,
+        negative: 0,
+        neutral: 0
+      };
+
+      const tabs = `
+        <div class="store-tabs">
+          <button class="store-tab-btn ${state.activeStoreTab === 'summary' ? 'active' : ''}" data-tab="summary">
+            Store Summary Stats
+          </button>
+          <button class="store-tab-btn ${state.activeStoreTab === 'products' ? 'active' : ''}" data-tab="products">
+            Products
+          </button>
+        </div>
+      `;
+
+      const prioritySection = renderPrioritySection();
+
+      const summaryPanelClass =
+        state.activeStoreTab === 'summary' ? 'panel-active' : 'panel-left';
+
+      const productsPanelClass =
+        state.activeStoreTab === 'products' ? 'panel-active' : 'panel-right';
+
+      const summaryPanel = `
+        <div id="storeSummaryPanel" class="store-tab-panel ${summaryPanelClass}">
+          ${prioritySection}
+          <div class="chart-row-3" style="margin-bottom:18px; grid-template-columns: 1fr 0.8fr;">
+            <section class="panel">
+              <h3>Top complaint aspects in this store</h3>
+              <div class="chart-wrap">
+                <canvas id="storeTopComplaintAspectsChart"></canvas>
+              </div>
+            </section>
+
+            <section class="panel">
+              <h3>Store sentiment</h3>
+              <div class="chart-wrap small">
+                <canvas id="storeSentimentDonutChart"></canvas>
+              </div>
+            </section>
+          </div>
+        </div>
+      `;
+
+      const productsPanel = `
+        <div id="storeProductsPanel" class="store-tab-panel ${productsPanelClass}">
+          <div class="card-grid">
+            ${state.filteredProducts.map(product => {
+              const sentiment = product.productSentiment || {};
+              const totalReviews = sentiment.total || product.rating_number || 0;
+
+              return `
+                <article class="product-card" data-asin="${product.parent_asin}">
+                  <div class="product-image">
+                    <img src="${product.image}" alt="${escapeHTML(product.title)}" loading="lazy" />
+                  </div>
+                  <div class="product-body">
+                    <h3 class="product-title">${escapeHTML(product.title)}</h3>
+                    <div class="product-meta">
+                      <div><strong>ASIN:</strong> ${escapeHTML(product.parent_asin)}</div>
+                      <div><strong>Category:</strong> ${escapeHTML(product.main_category || 'N/A')}</div>
+                      <div><strong>Rating:</strong> ${formatRating(product.average_rating)} (${formatNumber(product.rating_number)})</div>
+                      <div><strong>Negative reviews:</strong> ${formatNumber(sentiment.negative || 0)}</div>
+                      <div><strong>Review sentiment total:</strong> ${formatNumber(totalReviews)}</div>
                     </div>
-                    <div class="product-body">
-                        <h3 class="product-title">${escapeHTML(product.title)}</h3>
-                        <div class="product-meta">
-                        <div><strong>ASIN:</strong> ${escapeHTML(product.parent_asin)}</div>
-                        <div><strong>Category:</strong> ${escapeHTML(product.main_category || 'N/A')}</div>
-                        <div><strong>Rating:</strong> ${formatRating(product.average_rating)} (${formatNumber(product.rating_number)})</div>
-                        <div><strong>Negative reviews:</strong> ${formatNumber(sentiment.negative || 0)}</div>
-                        <div><strong>Review sentiment total:</strong> ${formatNumber(totalReviews)}</div>
-                        </div>
-                    </div>
-                    </article>
-                `;
-                }).join('')}
-            </div>
-            </div>
-        `;
+                  </div>
+                </article>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
 
-        els.listContent.innerHTML = tabs + prioritySection + chartPanels + productGrid;
+      els.listContent.innerHTML = `
+        ${tabs}
+        <div class="tab-stage">
+          ${summaryPanel}
+          ${productsPanel}
+        </div>
+      `;
 
-        document.querySelectorAll('.store-tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-            state.activeStoreTab = btn.dataset.tab;
-            renderStorePage();
-            });
+      document.querySelectorAll('.store-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          switchStoreTab(btn.dataset.tab);
         });
+      });
 
-        if (state.activeStoreTab === 'summary') {
-            renderStoreCharts(storeName, topComplaintItems, topAspectEntries, storeSentiment);
-        }
+      if (state.activeStoreTab === 'summary') {
+        renderStoreCharts(storeName, complaintItems.slice(0, 10), topAspectEntries, storeSentiment);
+        bindPrioritySection();
+      }
 
-        if (state.activeStoreTab === 'summary') {
-            bindPrioritySection();
-        }
-
-        document.querySelectorAll('.product-card').forEach(card => {
-            card.addEventListener('click', () => openProduct(card.dataset.asin));
+      document.querySelectorAll('.priority-product').forEach(card => {
+        card.addEventListener('click', () => {
+          openProduct(card.dataset.priorityAsin);
         });
+      });
+
+      document.querySelectorAll('.product-card').forEach(card => {
+        card.addEventListener('click', () => openProduct(card.dataset.asin));
+      });
     }
 
     function renderStoreCharts(storeName, complaintItems, topAspectEntries, storeSentiment) {
