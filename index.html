@@ -20,9 +20,9 @@
     --text-soft: #1e293b;
     --muted: #64748b;
 
-    --accent: #304a56;
-    --accent-2: #49b7ca;
-    --accent-3: #429cac;
+    --accent: #001952;
+    --accent-2: #1a4097;
+    --accent-3: #1f49ac;
     --accent-soft: rgba(70, 173, 229, 0.14);
     --accent-line: rgba(70, 176, 229, 0.26);
 
@@ -34,7 +34,7 @@
     --border-strong: rgba(192, 193, 206, 0.18);
 
     --shadow: 0 10px 30px rgba(105, 106, 108, 0.08);
-    --shadow-hover: 0 20px 46px rgba(8, 196, 234, 0.208);
+    --shadow-hover: 0 20px 46px rgba(166, 185, 189, 0.208);
     --glow: 0 0 0 1px rgba(255,255,255,0.4), 0 10px 30px rgba(79, 70, 229, 0.08);
 
     --radius-xl: 24px;
@@ -151,6 +151,7 @@
 
   select, input {
     border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(42, 149, 81, 0.85);
     background: rgba(255,255,255,0.72);
     color: var(--text);
     padding: 13px 15px;
@@ -578,8 +579,8 @@
   }
 
   .aspect-bar {
-    height: 10px;
-    border-radius: 999px;
+    height: 15px;
+    border-radius: 4px;
     overflow: hidden;
     display: flex;
     background: linear-gradient(90deg, rgba(226,232,240,0.9), rgba(241,245,249,0.9));
@@ -598,11 +599,11 @@
   }
 
   .bar-positive {
-    background: linear-gradient(90deg, #16a34a, #22c55e, #4ade80);
+    background: rgba(42, 149, 81, 0.85);
   }
 
   .bar-negative {
-    background: linear-gradient(90deg, #dc2626, #ef4444, #f87171);
+    background: #c74040;
   }
 
   .aspect-count {
@@ -837,6 +838,118 @@
     grid-column: 1 / -1;
   }
 
+  #avgRating {
+    font-size: 1.15rem;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+
+  .priority-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.priority-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+}
+
+.priority-panel h3 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.priority-subtext {
+  color: var(--muted);
+  font-size: 0.94rem;
+  margin-bottom: 14px;
+}
+
+.priority-products {
+  display: grid;
+  gap: 12px;
+}
+
+.priority-product {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border-radius: 10px;
+  background: #e8e8e8;
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 rgba(255,255,255,0.82);
+  backdrop-filter: blur(16px) saturate(165%);
+  -webkit-backdrop-filter: blur(16px) saturate(165%);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.priority-product:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(79, 70, 229, 0.24);
+}
+
+.priority-rank {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: white;
+  background: linear-gradient(135deg, #750d0d, #be2a2a);
+}
+
+.priority-product:nth-child(2) .priority-rank {
+  background: linear-gradient(135deg, #750d0d, #be2a2a);
+}
+
+.priority-product:nth-child(3) .priority-rank {
+  background: linear-gradient(135deg, #750d0d, #be2a2a);
+}
+
+.priority-title {
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+  margin-bottom: 6px;
+  font-size: 0.98rem;
+}
+
+.priority-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.priority-chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 320px;
+}
+
+@media (max-width: 960px) {
+  .priority-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
   @media (max-width: 1080px) {
     .stats-row {
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -941,12 +1054,12 @@
       </div>
 
       <div class="stat-card" id="productsCard">
-        <div class="label">Products shown</div>
+        <div class="label">Total Products</div>
         <div class="value" id="productsCount">-</div>
       </div>
 
       <div class="stat-card">
-        <div class="label">Avg rating</div>
+        <div class="label">Product with most complaints</div>
         <div class="value" id="avgRating">-</div>
       </div>
 
@@ -1351,28 +1464,179 @@
       renderStorePage();
     }
 
+    function renderPrioritySection() {
+      const storeName = state.selectedStore;
+      const productsVisible = state.filteredProducts;
+
+      if (!storeName || !productsVisible.length) {
+        return '';
+      }
+
+      const topPriorityProducts = productsVisible.slice(0, 3);
+
+      const complaintItems = (state.storeNegativeProducts.get(storeName) || [])
+        .filter(item => item.negative_mentions > 0);
+
+      const totalNegativeMentions = complaintItems.reduce((sum, item) => sum + item.negative_mentions, 0);
+      const top3Share = totalNegativeMentions > 0
+        ? ((complaintItems.slice(0, 3).reduce((sum, item) => sum + item.negative_mentions, 0) / totalNegativeMentions) * 100).toFixed(1)
+        : '0.0';
+
+      return `
+        <div class="priority-grid">
+          <section class="priority-panel">
+            <h3>Top 3 products with most negative aspects</h3>
+            <div class="priority-subtext">
+              Click a product to open its detail page.
+            </div>
+
+            <div class="priority-products">
+              ${topPriorityProducts.map((product, index) => `
+                <div class="priority-product" data-priority-asin="${escapeHTML(product.parent_asin)}">
+                  <div class="priority-rank">${index + 1}</div>
+                  <div>
+                    <div class="priority-title">${escapeHTML(truncateText(product.title, 82))}</div>
+                    <div class="priority-meta">
+                      <span><strong>Negative:</strong> ${formatNumber(product.productSentiment?.negative || 0)}</span>
+                      <span><strong>Rating:</strong> ${formatRating(product.average_rating)}</span>
+                      <span><strong>Mentions:</strong> ${formatNumber(product.total_mentions || 0)}</span>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </section>
+
+          <section class="priority-panel">
+            <h3>Complaint concentration</h3>
+            <div class="priority-subtext">
+              Top 3 products account for ${top3Share}% of this store’s negative complaint mentions.
+            </div>
+            <div class="priority-chart-wrap">
+              <canvas id="priorityComplaintChart"></canvas>
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function bindPrioritySection() {
+      const storeName = state.selectedStore;
+      if (!storeName) return;
+
+      const complaintItems = (state.storeNegativeProducts.get(storeName) || [])
+        .filter(item => item.negative_mentions > 0);
+
+      document.querySelectorAll('.priority-product').forEach(card => {
+        card.addEventListener('click', () => {
+          openProduct(card.dataset.priorityAsin);
+        });
+      });
+
+      destroyChart('priorityComplaintChart');
+
+      const concentrationCanvas = document.getElementById('priorityComplaintChart');
+      if (!concentrationCanvas) return;
+
+      const topComplaintItems = complaintItems.slice(0, 10);
+
+      const labels = topComplaintItems.map(item => {
+        const t = item.title || item.asin;
+        return t.length > 30 ? `${t.slice(0, 30)}…` : t;
+      });
+
+      const negatives = topComplaintItems.map(item => item.negative_mentions);
+      const total = negatives.reduce((a, b) => a + b, 0) || 1;
+      let running = 0;
+      const cumulative = negatives.map(v => {
+        running += v;
+        return Number(((running / total) * 100).toFixed(1));
+      });
+
+      state.charts.priorityComplaintChart = new Chart(concentrationCanvas, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Negative complaint mentions',
+              data: negatives,
+              backgroundColor: 'rgba(227, 27, 27, 0.8)',
+              borderColor: 'rgba(227, 27, 27, 0.8)',
+              borderWidth: 1,
+              yAxisID: 'y',
+              order: 2
+            },
+            {
+              type: 'line',
+              label: 'Cumulative %',
+              data: cumulative,
+              borderColor: 'rgb(84, 126, 147)',
+              backgroundColor: 'rgb(84, 126, 147)',
+              tension: 0.3,
+              pointRadius: 3,
+              yAxisID: 'y1',
+              order: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#334155' } }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#64748b', maxRotation: 45, minRotation: 45 },
+              grid: { color: 'rgba(100, 116, 139, 0.16)' }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { color: '#64748b' },
+              grid: { color: 'rgba(100, 116, 139, 0.16)' }
+            },
+            y1: {
+              beginAtZero: true,
+              max: 100,
+              position: 'right',
+              ticks: {
+                color: '#64748b',
+                callback: value => `${value}%`
+              },
+              grid: { drawOnChartArea: false }
+            }
+          }
+        }
+      });
+    }
+
     function renderStats() {
         const productsVisible = state.filteredProducts;
-
-        const ratings = productsVisible
-            .map(item => Number(item.average_rating))
-            .filter(Number.isFinite);
 
         const mentions = productsVisible.reduce(
             (sum, item) => sum + Number(item.total_mentions || 0),
             0
         );
 
-        const avg = ratings.length
-            ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
-            : '-';
+        const worstProduct = productsVisible.reduce((worst, item) => {
+            const neg = Number(item.productSentiment?.negative || 0);
+            if (neg > (Number(worst.productSentiment?.negative || 0))) {
+                return item;
+            }
+            return worst;
+        }, {});
+        const worstProductTitle = worstProduct
+        ? truncateText(worstProduct.title || worstProduct.parent_asin || '-', 42)
+        : '-';
 
         els.statsRow.classList.remove('three-cards');
         els.storesLabel.textContent = 'Store';
         els.storesCount.textContent = state.selectedStore || '-';
         els.productsCard.style.display = '';
         els.productsCount.textContent = formatNumber(productsVisible.length);
-        els.avgRating.textContent = avg;
+        els.avgRating.textContent = worstProductTitle;
         els.mentionCount.textContent = formatNumber(mentions);
     }
 
@@ -1452,22 +1716,19 @@
                 Products
             </button>
             </div>
+
+            
         `;
+        const prioritySection = state.activeStoreTab === 'summary'
+                      ? renderPrioritySection()
+                      : '';
 
         const chartPanels = `
             <div id="storeSummaryPanel" class="store-tab-panel ${state.activeStoreTab === 'summary' ? '' : 'hidden'}">
-            <div class="chart-row-3" style="margin-bottom:18px;">
+              <div class="chart-row-3" style="margin-bottom:18px; grid-template-columns: 1fr 0.8fr;">
                 <section class="panel">
-                <h3>Complaint concentration</h3>
-                <div style="color:var(--muted); margin-bottom:12px; font-size:0.92rem;">
-                    Top 3 products account for ${top3Share}% of this store’s negative complaint mentions.
-                </div>
-                <div class="chart-wrap"><canvas id="storeComplaintConcentrationChart"></canvas></div>
-                </section>
-
-                <section class="panel">
-                <h3>Top complaint aspects in this store</h3>
-                <div class="chart-wrap"><canvas id="storeTopComplaintAspectsChart"></canvas></div>
+                  <h3>Top complaint aspects in this store</h3>
+                  <div class="chart-wrap"><canvas id="storeTopComplaintAspectsChart"></canvas></div>
                 </section>
 
                 <section class="panel">
@@ -1507,7 +1768,7 @@
             </div>
         `;
 
-        els.listContent.innerHTML = tabs + chartPanels + productGrid;
+        els.listContent.innerHTML = tabs + prioritySection + chartPanels + productGrid;
 
         document.querySelectorAll('.store-tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -1520,6 +1781,10 @@
             renderStoreCharts(storeName, topComplaintItems, topAspectEntries, storeSentiment);
         }
 
+        if (state.activeStoreTab === 'summary') {
+            bindPrioritySection();
+        }
+
         document.querySelectorAll('.product-card').forEach(card => {
             card.addEventListener('click', () => openProduct(card.dataset.asin));
         });
@@ -1527,78 +1792,6 @@
 
     function renderStoreCharts(storeName, complaintItems, topAspectEntries, storeSentiment) {
       destroyListCharts();
-
-      const concentrationCanvas = document.getElementById('storeComplaintConcentrationChart');
-      if (concentrationCanvas) {
-        const labels = complaintItems.map(item => {
-          const t = item.title || item.asin;
-          return t.length > 30 ? `${t.slice(0, 30)}…` : t;
-        });
-
-        const negatives = complaintItems.map(item => item.negative_mentions);
-        const total = negatives.reduce((a, b) => a + b, 0) || 1;
-        let running = 0;
-        const cumulative = negatives.map(v => {
-          running += v;
-          return Number(((running / total) * 100).toFixed(1));
-        });
-
-        state.charts.storeComplaintConcentration = new Chart(concentrationCanvas, {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [
-              {
-                type: 'bar',
-                label: 'Negative complaint mentions',
-                data: negatives,
-                backgroundColor: 'rgba(239, 68, 68, 0.78)',
-                borderColor: 'rgba(220, 38, 38, 1)',
-                borderWidth: 1,
-                yAxisID: 'y'
-              },
-              {
-                type: 'line',
-                label: 'Cumulative %',
-                data: cumulative,
-                borderColor: 'rgba(79, 70, 229, 1)',
-                backgroundColor: 'rgba(79, 70, 229, 1)',
-                tension: 0.3,
-                pointRadius: 3,
-                yAxisID: 'y1'
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { labels: { color: '#334155' } }
-            },
-            scales: {
-              x: {
-                ticks: { color: '#64748b', maxRotation: 45, minRotation: 45 },
-                grid: { color: 'rgba(100, 116, 139, 0.16)' }
-              },
-              y: {
-                beginAtZero: true,
-                ticks: { color: '#64748b' },
-                grid: { color: 'rgba(100, 116, 139, 0.16)' }
-              },
-              y1: {
-                beginAtZero: true,
-                max: 100,
-                position: 'right',
-                ticks: {
-                  color: '#64748b',
-                  callback: value => `${value}%`
-                },
-                grid: { drawOnChartArea: false }
-              }
-            }
-          }
-        });
-      }
 
       const aspectsCanvas = document.getElementById('storeTopComplaintAspectsChart');
       if (aspectsCanvas) {
@@ -1609,8 +1802,8 @@
             datasets: [{
               label: 'Negative mentions',
               data: topAspectEntries.map(([, count]) => count),
-              backgroundColor: 'rgba(239, 68, 68, 0.78)',
-              borderColor: 'rgba(220, 38, 38, 1)',  
+              backgroundColor: 'rgba(227, 27, 27, 0.8)',
+              borderColor: 'rgba(227, 27, 27, 0.8)',  
               borderWidth: 1
             }]
           },
@@ -1648,8 +1841,8 @@
                 Number(storeSentiment.negative || 0)
               ],
               backgroundColor: [
-                'rgba(74, 222, 128, 0.85)',
-                'rgba(248, 113, 113, 0.85)'
+                'rgba(42, 149, 81, 0.85)',
+                'rgba(227, 27, 27, 0.8)'
               ],
               borderWidth: 1
             }]
@@ -1848,8 +2041,8 @@
               {
                 label: 'Negative',
                 data: topAspects.map(a => Number(a.negative || 0)),
-                backgroundColor: 'rgba(239, 68, 68, 0.78)',
-                borderColor: 'rgba(220, 38, 38, 1)',
+                backgroundColor: 'rgba(227, 27, 27, 0.8)',
+                borderColor: 'rgba(227, 27, 27, 0.8)',
                 borderWidth: 1
               }
             ]
@@ -1890,8 +2083,8 @@
                 Number(sentiment.negative || 0)
               ],
               backgroundColor: [
-                'rgba(74, 222, 128, 0.85)',
-                'rgba(248, 113, 113, 0.85)'
+                'rgba(42, 149, 81, 0.85)',
+                'rgba(227, 27, 27, 0.8)'
               ],
               borderWidth: 1
             }]
